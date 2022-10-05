@@ -1,0 +1,9 @@
+-- get table sizes
+SELECT table_catalog, 
+       table_name, 
+       active_bytes / 1024 AS storage_usage_MB 
+FROM   "INFORMATION_SCHEMA".table_storage_metrics 
+where TABLE_CATALOG in ('TEST_DB');
+
+--- or this for specific tables
+SHOW TABLES LIKE 'ORDERS%'

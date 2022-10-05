@@ -1,0 +1,17 @@
+-- Create storage integration object
+
+create or replace storage integration s3_int
+  TYPE = EXTERNAL_STAGE
+  STORAGE_PROVIDER = S3
+  ENABLED = TRUE 
+  STORAGE_AWS_ROLE_ARN = 'arn:aws:iam::387110540080:role/snowflake-access-role'
+  STORAGE_ALLOWED_LOCATIONS = ('s3://elasticbeanstalk-us-west-1-387110540080')
+   COMMENT = 'This an optional comment' 
+   
+   
+-- See storage integration properties to fetch external_id so we can update it in S3
+DESC integration s3_int;
+
+-- after this, go back to the IAM console, click on the trust relationships tab, and click edit
+-- (1) COPY STORAGE_AWS_IAM_USER_ARN and replace Statement.Principal.AWS
+-- (2) COPY STORAGE_AWS_EXTERNAL_ID and replace Statement.Condition.StringEquals.sts:ExternalID

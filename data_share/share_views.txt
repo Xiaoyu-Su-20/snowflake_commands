@@ -1,0 +1,72 @@
+
+-- Create database & table --
+CREATE OR REPLACE TABLE TEST_DB.public.customers (
+   id int,
+   first_name string,
+  last_name string,
+  email string,
+  gender string,
+  Job string,
+  Phone string);
+
+    
+-- Stage and file format
+CREATE OR REPLACE FILE FORMAT TEST_DB.file_formats.csv_file
+    type = csv
+    field_delimiter = ','
+    skip_header = 1;
+    
+CREATE OR REPLACE STAGE TEST_DB.external_stages.time_travel_stage
+    URL = 's3://data-snowflake-fundamentals/time-travel/'
+    file_format = TEST_DB.file_formats.csv_file;
+    
+LIST  @TEST_DB.external_stages.time_travel_stage;
+
+
+-- Copy data and insert in table
+COPY INTO TEST_DB.public.customers
+FROM @TEST_DB.external_stages.time_travel_stage
+files = ('customers.csv');
+
+SELECT * FROM  TEST_DB.PUBLIC.CUSTOMERS;
+
+-- Create VIEW but we are not allowed to share this view
+CREATE OR REPLACE VIEW TEST_DB.PUBLIC.CUSTOMER_VIEW AS
+SELECT 
+FIRST_NAME,
+LAST_NAME,
+EMAIL
+FROM TEST_DB.PUBLIC.CUSTOMERS
+WHERE JOB != 'DATA SCIENTIST';
+
+-- Create SECURE VIEW -- 
+
+CREATE OR REPLACE SECURE VIEW TEST_DB.PUBLIC.CUSTOMER_VIEW_SECURE AS
+SELECT 
+FIRST_NAME,
+LAST_NAME,
+EMAIL
+FROM TEST_DB.PUBLIC.CUSTOMERS
+WHERE JOB != 'DATA SCIENTIST' 
+
+GRANT SELECT ON VIEW TEST_DB.PUBLIC.CUSTOMER_VIEW_SECURE TO ROLE PUBLIC;
+
+SHOW VIEWS LIKE '%CUSTOMER%';
+
+
+-- Create share object
+CREATE OR REPLACE SHARE VIEW_SHARE;
+
+-- Grant usage on dabase & schema
+GRANT USAGE ON DATABASE TEST_DB TO SHARE VIEW_SHARE;
+GRANT USAGE ON SCHEMA TEST_DB.PUBLIC TO SHARE VIEW_SHARE;
+
+-- Grant select on view
+GRANT SELECT ON VIEW  TEST_DB.PUBLIC.CUSTOMER_VIEW TO SHARE VIEW_SHARE;
+GRANT SELECT ON VIEW  TEST_DB.PUBLIC.CUSTOMER_VIEW_SECURE TO SHARE VIEW_SHARE;
+
+
+-- Add account to share
+ALTER SHARE VIEW_SHARE
+ADD ACCOUNT=BZ24174
+

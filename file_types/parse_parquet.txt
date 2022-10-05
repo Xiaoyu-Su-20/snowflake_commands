@@ -1,0 +1,36 @@
+
+    -- Create file format and stage object
+    
+CREATE OR REPLACE FILE FORMAT TEST_DB.FILE_FORMATS.PARQUET_FORMAT
+    TYPE = 'parquet';
+
+CREATE OR REPLACE STAGE TEST_DB.EXTERNAL_STAGES.PARQUETSTAGE
+    url = 's3://snowflakeparquetdemo'   
+    FILE_FORMAT = TEST_DB.FILE_FORMATS.PARQUET_FORMAT;
+    
+    
+    -- Preview the data
+    
+LIST  @TEST_DB.EXTERNAL_STAGES.PARQUETSTAGE;   
+    
+SELECT * FROM @TEST_DB.EXTERNAL_STAGES.PARQUETSTAGE LIMIT 5;
+
+
+-- Querying with conversions and aliases
+    
+SELECT 
+$1:__index_level_0__::int as index_level,
+$1:cat_id::VARCHAR(50) as category,
+DATE($1:date::int ) as Date,
+$1:"dept_id"::VARCHAR(50) as Dept_ID,
+$1:"id"::VARCHAR(50) as ID,
+$1:"item_id"::VARCHAR(50) as Item_ID,
+$1:"state_id"::VARCHAR(50) as State_ID,
+$1:"store_id"::VARCHAR(50) as Store_ID,
+$1:"value"::int as value,
+METADATA$FILENAME as FILENAME,
+METADATA$FILE_ROW_NUMBER as ROWNUMBER,
+TO_TIMESTAMP_NTZ(current_timestamp) as LOAD_DATE --convert timestamp into no time zone
+FROM @TEST_DB.EXTERNAL_STAGES.PARQUETSTAGE
+LIMIT 5;
+

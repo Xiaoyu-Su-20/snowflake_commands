@@ -1,0 +1,61 @@
+-- Manage pipes -- 
+USE SCHEMA PIPES
+
+DESC pipe TEST_DB.pipes.employee_pipe;
+
+SHOW PIPES;
+
+SHOW PIPES like '%employee%'
+
+SHOW PIPES in database TEST_DB
+
+SHOW PIPES in schema TEST_DB.pipes
+
+SHOW PIPES like '%employee%' in Database TEST_DB
+
+
+
+-- Changing pipe (alter stage or file format) --
+
+-- Preparation table first
+CREATE OR REPLACE TABLE TEST_DB.PUBLIC.employees2 (
+  id INT,
+  first_name STRING,
+  last_name STRING,
+  email STRING,
+  location STRING,
+  department STRING
+  )
+
+
+-- Pause pipe
+ALTER PIPE TEST_DB.pipes.employee_pipe SET PIPE_EXECUTION_PAUSED = true
+ 
+ 
+-- Verify pipe is paused and has pendingFileCount 0 
+SELECT SYSTEM$PIPE_STATUS('TEST_DB.pipes.employee_pipe') 
+ 
+ -- Recreate the pipe to change the COPY statement in the definition
+CREATE OR REPLACE pipe TEST_DB.pipes.employee_pipe
+auto_ingest = TRUE
+AS
+COPY INTO TEST_DB.PUBLIC.employees2
+FROM @TEST_DB.external_stages.csv_folder  
+
+ALTER PIPE  TEST_DB.pipes.employee_pipe refresh
+
+-- List files in stage
+LIST @TEST_DB.external_stages.csv_folder  
+
+SELECT * FROM TEST_DB.PUBLIC.employees2
+
+ -- Reload files manually that where aleady in the bucket
+COPY INTO TEST_DB.PUBLIC.employees2
+FROM @TEST_DB.external_stages.csv_folder  
+
+
+-- Resume pipe
+ALTER PIPE TEST_DB.pipes.employee_pipe SET PIPE_EXECUTION_PAUSED = false
+
+-- Verify pipe is running again
+SELECT SYSTEM$PIPE_STATUS('TEST_DB.pipes.employee_pipe') 

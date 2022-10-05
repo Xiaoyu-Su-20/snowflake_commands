@@ -1,0 +1,59 @@
+CREATE OR REPLACE TRANSIENT TABLE TEST_DB.public.customers_transient (
+  id int,
+  first_name string,
+  last_name string,
+  email string,
+  gender string,
+  Job string,
+  Phone string);
+
+INSERT INTO TEST_DB.public.customers_transient
+SELECT t1.* FROM TEST_DB.public.customers t1
+CROSS JOIN (SELECT * FROM TEST_DB.public.customers) t2
+
+SHOW TABLES in TEST_DB.PUBLIC STARTS WITH 'CUSTOMER';
+
+
+-- Query storage
+
+SELECT * FROM SNOWFLAKE.ACCOUNT_USAGE.TABLE_STORAGE_METRICS
+
+
+SELECT 	ID, 
+        TABLE_NAME, 
+    TABLE_SCHEMA,
+        TABLE_CATALOG,
+    ACTIVE_BYTES,
+    TIME_TRAVEL_BYTES / (1024*1024*1024) AS TIME_TRAVEL_STORAGE_USED_GB,
+    FAILSAFE_BYTES / (1024*1024*1024) AS FAILSAFE_STORAGE_USED_GB,
+        IS_TRANSIENT,
+        DELETED,
+        TABLE_CREATED,
+        TABLE_DROPPED,
+        TABLE_ENTERED_FAILSAFE
+FROM SNOWFLAKE.ACCOUNT_USAGE.TABLE_STORAGE_METRICS
+WHERE TABLE_CATALOG ='TEST_DB'
+ORDER BY TABLE_CREATED DESC;
+
+
+-- Creating transient schema and then table 
+
+CREATE OR REPLACE TRANSIENT SCHEMA TRANSIENT_SCHEMA;
+
+SHOW SCHEMAS;
+
+CREATE OR REPLACE TABLE TEST_DB.TRANSIENT_SCHEMA.new_table (
+  id int,
+  first_name string,
+  last_name string,
+  email string,
+  gender string,
+  Job string,
+  Phone string);
+  
+
+ALTER TABLE TEST_DB.TRANSIENT_SCHEMA.new_table
+SET DATA_RETENTION_TIME_IN_DAYS  = 2
+
+SHOW TABLES;
+

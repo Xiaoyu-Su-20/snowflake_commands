@@ -1,0 +1,81 @@
+ -- Create new stage
+ CREATE OR REPLACE STAGE TEST_DB.external_stages.aws_stage_errorex
+    url='s3://bucketsnowflakes4'
+ 
+ -- List files in stage
+ LIST @TEST_DB.external_stages.aws_stage_errorex;
+ 
+ 
+ -- Create example table
+ CREATE OR REPLACE TABLE TEST_DB.PUBLIC.ORDERS_EX (
+    ORDER_ID VARCHAR(30),
+    AMOUNT INT,
+    PROFIT INT,
+    QUANTITY INT,
+    CATEGORY VARCHAR(30),
+    SUBCATEGORY VARCHAR(30));
+    
+
+-- Error handling using the ON_ERROR option
+-- CONTINUE key word ignore the rows with errors
+COPY INTO TEST_DB.PUBLIC.ORDERS_EX
+    FROM @TEST_DB.external_stages.aws_stage_errorex
+    file_format= (type = csv field_delimiter=',' skip_header=1)
+    files = ('OrderDetails_error.csv')
+    ON_ERROR = 'CONTINUE';
+
+-- Error handling using the ON_ERROR option = ABORT_STATEMENT (default)
+COPY INTO TEST_DB.PUBLIC.ORDERS_EX
+    FROM @TEST_DB.external_stages.aws_stage_errorex
+    file_format= (type = csv field_delimiter=',' skip_header=1)
+    files = ('OrderDetails_error.csv','OrderDetails_error2.csv')
+    ON_ERROR = 'ABORT_STATEMENT';
+
+-- Error handling using the ON_ERROR option = SKIP_FILE
+COPY INTO TEST_DB.PUBLIC.ORDERS_EX
+    FROM @TEST_DB.external_stages.aws_stage_errorex
+    file_format= (type = csv field_delimiter=',' skip_header=1)
+    files = ('OrderDetails_error.csv','OrderDetails_error2.csv')
+    ON_ERROR = 'SKIP_FILE';
+    
+
+-- Error handling using the ON_ERROR option = SKIP_FILE_<number>
+-- a file will be skipped if the number of errors >= <number>
+COPY INTO TEST_DB.PUBLIC.ORDERS_EX
+    FROM @TEST_DB.external_stages.aws_stage_errorex
+    file_format= (type = csv field_delimiter=',' skip_header=1)
+    files = ('OrderDetails_error.csv','OrderDetails_error2.csv')
+    ON_ERROR = 'SKIP_FILE_2';    
+     
+
+    
+-- Error handling using the ON_ERROR option = SKIP_FILE_<number>
+-- a file will be skipped if the errors occurs <percent> of the total number of rows
+COPY INTO TEST_DB.PUBLIC.ORDERS_EX
+    FROM @TEST_DB.external_stages.aws_stage_errorex
+    file_format= (type = csv field_delimiter=',' skip_header=1)
+    files = ('OrderDetails_error.csv','OrderDetails_error2.csv')
+    ON_ERROR = 'SKIP_FILE_0.5%'; 
+  
+
+-- SIZE_LIMIT 
+-- specifies the maximum size (in bytes) of data to be loaded.
+-- When the threshold is exceeded, the COPY operation discontinues loading files.
+-- Note: the first file will always be loaded, if only checks if all the previously loaded files exceed the specified size
+COPY INTO TEST_DB.PUBLIC.ORDERS_EX
+    FROM @TEST_DB.external_stages.aws_stage_errorex
+    file_format= (type = csv field_delimiter=',' skip_header=1)
+    files = ('OrderDetails_error.csv','OrderDetails_error2.csv')
+    ON_ERROR = SKIP_FILE_3 
+    SIZE_LIMIT = 30;
+
+-- VALIDATION_MODE
+-- only validate the data and not loading them
+-- can return errors or return actual data
+COPY INTO COPY_DB.PUBLIC.ORDERS
+    FROM @aws_stage_copy
+    file_format= (type = csv field_delimiter=',' skip_header=1)
+    pattern='.*Order.*'
+   VALIDATION_MODE = RETURN_5_ROWS -- or RETURN_ERRORS
+
+

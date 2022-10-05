@@ -1,0 +1,18 @@
+-- Create temporary table (with the same name)
+CREATE OR REPLACE TEMPORARY TABLE TEST_DB.public.customers (
+   id int,
+   first_name string,
+  last_name string,
+  email string,
+  gender string,
+  Job string,
+  Phone string);
+
+
+-- Validate temporary table is the active table
+SELECT * FROM TEST_DB.public.customers;
+
+-- Create second temporary table (with a new name)
+SHOW TABLES;
+
+-- kill the session and verify that the permanent table with the same name still exists

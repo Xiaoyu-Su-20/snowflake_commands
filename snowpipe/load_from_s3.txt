@@ -1,0 +1,59 @@
+-- Create table first
+CREATE OR REPLACE TABLE TEST_DB.PUBLIC.movie_titles (
+  show_id STRING,
+  type STRING,
+  title STRING,
+  director STRING,
+  cast STRING,
+  country STRING,
+  date_added STRING,
+  release_year STRING,
+  rating STRING,
+  duration STRING,
+  listed_in STRING,
+  description STRING )
+  
+  
+
+-- Create file format object
+CREATE OR REPLACE file format TEST_DB.file_formats.csv_fileformat
+    type = csv
+    field_delimiter = ','
+    skip_header = 1
+    null_if = ('NULL','null')
+    empty_field_as_null = TRUE;
+    
+    
+ -- Create stage object with integration object & file format object
+CREATE OR REPLACE stage TEST_DB.external_stages.csv_folder
+    URL = 's3://<your-bucket-name>/<your-path>/'
+    STORAGE_INTEGRATION = s3_int
+    FILE_FORMAT = TEST_DB.file_formats.csv_fileformat
+
+
+
+-- Use Copy command, this will fail and the error says the column number does not match
+COPY INTO TEST_DB.PUBLIC.movie_titles
+    FROM @TEST_DB.external_stages.csv_folder
+    
+    
+    
+    
+-- this is because the directors are comma separated values enclosed in "".
+-- we have to tell snowflake to treat it differently
+-- Create file format object
+CREATE OR REPLACE file format TEST_DB.file_formats.csv_fileformat
+    type = csv
+    field_delimiter = ','
+    skip_header = 1
+    null_if = ('NULL','null')
+    empty_field_as_null = TRUE    
+    FIELD_OPTIONALLY_ENCLOSED_BY = '"'    
+
+COPY INTO TEST_DB.PUBLIC.movie_titles
+    FROM @TEST_DB.external_stages.csv_folder
+    
+SELECT * FROM TEST_DB.PUBLIC.movie_titles
+    
+    
+   

@@ -1,0 +1,46 @@
+-- Create table first
+CREATE OR REPLACE TABLE TEST_DB.PUBLIC.employees (
+  id INT,
+  first_name STRING,
+  last_name STRING,
+  email STRING,
+  location STRING,
+  department STRING
+  )
+    
+
+-- Create file format object
+CREATE OR REPLACE file format TEST_DB.file_formats.csv_fileformat
+    type = csv
+    field_delimiter = ','
+    skip_header = 1
+    null_if = ('NULL','null')
+    empty_field_as_null = TRUE;
+    
+    
+ -- Create stage object with integration object & file format object
+CREATE OR REPLACE stage TEST_DB.external_stages.csv_folder
+    URL = 's3://<your-s3-bucket>'
+    STORAGE_INTEGRATION = s3_int
+    FILE_FORMAT = TEST_DB.file_formats.csv_fileformat
+   
+
+ -- Create stage object with integration object & file format object
+LIST @TEST_DB.external_stages.csv_folder  
+
+
+-- Create schema to keep things organized
+CREATE OR REPLACE SCHEMA TEST_DB.PIPES
+
+-- Define pipe
+CREATE OR REPLACE PIPE TEST_DB.PIPES.employee_pipe
+auto_ingest = TRUE
+AS
+COPY INTO TEST_DB.PUBLIC.employees
+FROM @TEST_DB.external_stages.csv_folder  
+
+-- Describe pipe
+DESC PIPE employee_pipe
+    
+-- here the value in notification_channel represents the ARN used for 
+-- the snowflake SQS channel

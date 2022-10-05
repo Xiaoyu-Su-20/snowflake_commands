@@ -1,0 +1,47 @@
+-- Second step: Parse & Analyse Raw JSON 
+
+-- Selecting attribute/column, refer to the column name
+SELECT RAW_FILE:city FROM TEST_DB.PUBLIC.JSON_RAW
+
+-- refer to the column number
+SELECT $1:first_name FROM TEST_DB.PUBLIC.JSON_RAW
+
+
+   -- Selecting attribute/column - formattted
+
+SELECT RAW_FILE:first_name::string as first_name  FROM TEST_DB.PUBLIC.JSON_RAW;
+
+SELECT RAW_FILE:id::int as id  FROM TEST_DB.PUBLIC.JSON_RAW;
+
+SELECT 
+    RAW_FILE:id::int as id,  
+    RAW_FILE:first_name::STRING as first_name,
+    RAW_FILE:last_name::STRING as last_name,
+    RAW_FILE:gender::STRING as gender
+
+FROM TEST_DB.PUBLIC.JSON_RAW;
+
+
+
+-- Handling nested data
+SELECT 
+      RAW_FILE:job.salary::INT as salary
+FROM TEST_DB.PUBLIC.JSON_RAW;
+
+-- handling array
+SELECT
+    RAW_FILE:prev_company[1]::STRING as prev_company
+FROM TEST_DB.PUBLIC.JSON_RAW;
+
+
+SELECT  
+    ARRAY_SIZE(RAW_FILE:prev_company) as prev_company
+FROM TEST_DB.PUBLIC.JSON_RAW;
+
+-- flatten (expand one row   into multiple rows) and join
+INSERT INTO Languages
+select
+      RAW_FILE:first_name::STRING as First_name,
+    f.value:language::STRING as First_language,
+   f.value:level::STRING as Level_spoken
+from OUR_FIRST_DB.PUBLIC.JSON_RAW, table(flatten(RAW_FILE:spoken_languages)) f; 

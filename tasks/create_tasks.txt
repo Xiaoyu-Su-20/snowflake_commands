@@ -1,0 +1,54 @@
+CREATE OR REPLACE TRANSIENT DATABASE TASK_DB;
+
+-- Prepare table
+CREATE OR REPLACE TABLE CUSTOMERS (
+    CUSTOMER_ID INT AUTOINCREMENT START = 1 INCREMENT =1,
+    FIRST_NAME VARCHAR(40) DEFAULT 'JENNIFER' ,
+    CREATE_DATE DATE)
+    
+    
+-- Create task
+CREATE OR REPLACE TASK CUSTOMER_INSERT
+    WAREHOUSE = TEST_WH
+    SCHEDULE = '1 MINUTE'
+    AS 
+    INSERT INTO CUSTOMERS(CREATE_DATE) VALUES(CURRENT_TIMESTAMP);
+    
+
+SHOW TASKS;
+
+-- Task starting and suspending
+ALTER TASK CUSTOMER_INSERT RESUME;
+ALTER TASK CUSTOMER_INSERT SUSPEND;
+
+
+SELECT * FROM CUSTOMERS
+
+
+-- USING CRON
+-- Start with 'USING CRON', then the normal CRON statement, and finally, specifying the time zone.
+CREATE OR REPLACE TASK CUSTOMER_INSERT
+    WAREHOUSE = TEST_WH
+    SCHEDULE = 'USING CRON */1 * * * * UTC'
+    AS 
+    INSERT INTO CUSTOMERS(CREATE_DATE) VALUES(CURRENT_TIMESTAMP);
+    
+
+-- __________ minute (0-59)
+-- | ________ hour (0-23)
+-- | | ______ day of month (1-31, or L)
+-- | | | ____ month (1-12, JAN-DEC)
+-- | | | | __ day of week (0-6, SUN-SAT, or L)
+
+
+
+
+-- task with condition
+CREATE OR REPLACE TASK CUSTOMER_INSERT
+    WAREHOUSE = TEST_WH
+    SCHEDULE = 'USING CRON */1 * * * * UTC'
+    WHEN 1=2    
+    AS 
+    INSERT INTO CUSTOMERS(CREATE_DATE) VALUES(CURRENT_TIMESTAMP);  
+
+

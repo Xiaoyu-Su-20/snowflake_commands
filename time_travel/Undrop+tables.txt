@@ -1,0 +1,81 @@
+           
+-- Setting up table
+
+CREATE OR REPLACE STAGE MANAGE_DB.external_stages.time_travel_stage
+    URL = 's3:--data-snowflake-fundamentals/time-travel/'
+    file_format = MANAGE_DB.file_formats.csv_file;
+    
+
+CREATE OR REPLACE TABLE TEST_DB.public.customers (
+   id int,
+   first_name string,
+  last_name string,
+  email string,
+  gender string,
+  Job string,
+  Phone string);
+    
+
+COPY INTO TEST_DB.public.customers
+from @MANAGE_DB.external_stages.time_travel_stage
+files = ('customers.csv');
+
+SELECT * FROM TEST_DB.public.customers;
+
+
+-- UNDROP command - Tables
+
+DROP TABLE TEST_DB.public.customers;
+
+SELECT * FROM TEST_DB.public.customers;
+
+UNDROP TABLE TEST_DB.public.customers;
+
+
+-- UNDROP command - Schemas
+
+DROP SCHEMA TEST_DB.public;
+
+SELECT * FROM TEST_DB.public.customers;
+
+UNDROP SCHEMA TEST_DB.public;
+
+
+-- UNDROP command - Database
+
+DROP DATABASE TEST_DB;
+
+SELECT * FROM TEST_DB.public.customers;
+
+UNDROP DATABASE TEST_DB;
+
+
+
+
+
+-- Restore replaced table 
+
+
+UPDATE TEST_DB.public.customers
+SET LAST_NAME = 'Tyson';
+
+
+UPDATE TEST_DB.public.customers
+SET JOB = 'Data Analyst';
+
+---- time travel to revert updates and replace the table, but unwanted updates still remain
+CREATE OR REPLACE TABLE TEST_DB.public.customers as
+SELECT * FROM TEST_DB.public.customers before (statement => '019b9f7c-0500-851b-0043-4d83000762be')
+
+---- rename the new table to allow undrop for the old table 
+ALTER TABLE TEST_DB.public.customers
+RENAME TO TEST_DB.public.customers_wrong;
+
+UNDROP table TEST_DB.public.customers;
+
+---- now time travel again to revert the correct updates
+CREATE OR REPLACE TABLE TEST_DB.public.customers as
+SELECT * FROM TEST_DB.public.customers before (statement => '019b9f7c-0500-851b-0043-4d83000762be')
+
+DESC table TEST_DB.public.customers
+    
